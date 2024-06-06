@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Data Visualization Dashboard</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <h1>Data Visualization Dashboard</h1>
+    <svg width="960" height="500"></svg>
+    <script>
+        // Fetch data from the API
+        fetch('/api')
+            .then(response => response.json())
+            .then(data => {
+                // Parse the data
+                data = data.map(d => {
+                    return {
+                        intensity: d.intensity,
+                        relevance: d.relevance,
+                        sector: d.sector,
+                        likelihood: d.likelihood
+                    };
+                });
+
+                // Set up the SVG canvas dimensions
+                const margin = {top: 20, right: 30, bottom: 40, left: 40};
+                const width = 960 - margin.left - margin.right;
+                const height = 500 - margin.top - margin.bottom;
+
+                const svg = d3.select("svg")
+                    .attr("width", width + margin.left + margin.right)
+                    .attr("height", height + margin.top + margin.bottom)
+                  .append("g")
+                    .attr("transform", `translate(${margin.left},${margin.top})`);
+
+                // Set up scales
+                const x = d3.scaleBand()
+                    .domain(data.map(d => d.sector))
+                    .range([0, width])
+                    .padding(0.1);
+
+                const y = d3.scaleLinear()
+                    .domain([0, d3.max(data, d => d.intensity)])
+                    .nice()
+                    .range([height, 0]);
+
+                // Add the x-axis
+                svg.append("g")
+                    .attr("transform", `translate(0,${height})`)
+                    .call(d3.axisBottom(x));
+
+                // Add the y-axis
+                svg.append("g")
+                    .call(d3.axisLeft(y));
+
+                // Add bars
+                svg.selectAll(".bar")
+                  .data(data)
+                  .enter().append("rect")
+                    .attr("class", "bar")
+                    .attr("x", d => x(d.sector))
+                    .attr("y", d => y(d.intensity))
+                    .attr("width", x.bandwidth())
+                    .attr("height", d => height - y(d.intensity))
+                    .attr("fill", "steelblue");
+            })
+            .catch(error => console.error(error));
+    </script>
+</body>
+</html>
